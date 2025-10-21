@@ -28,9 +28,7 @@ void SortedDeque::clear(){
 }
 
 void SortedDeque::copy_from(const SortedDeque& other){
-    // Rebuild from other's vector (preserves order).
-    // NOTE: to_vector() is TODO for students; copy_from is only used by
-    // copy ctor / assignment in our tests after you implement to_vector().
+    // Rebuild from other's vector (preserves order)
     for(int x: other.to_vector()){
         push_back_node(new Node(x));
     }
@@ -92,42 +90,84 @@ int SortedDeque::back() const{
     return tail->val;
 }
 
-// ------------------------
-// STUDENT TODO FUNCTIONS
-// ------------------------
-
-// Subproblem 1: insert
+// ---- Subproblem 1: insert(int x) ----
 void SortedDeque::insert(int x){
-    // TODO: Insert x to keep non-decreasing order.
-    // Placeholder so it compiles; this does NOT maintain sorted order.
-    push_back_node(new Node(x));
+    // TODO: insert x in non-decreasing order
+    // Strategy: find first node with val > x and insert_before.
+    Node* nd = new Node(x);
+    Node* cur = head;
+    while(cur && cur->val <= x){
+        cur = cur->next;
+    }
+    // cur is first > x (or null to append at end)
+    if(cur){
+        insert_before(cur, nd);
+    } else {
+        push_back_node(nd);
+    }
 }
 
-// Subproblem 2: erase
+// ---- Subproblem 2: erase(int x) ----
 bool SortedDeque::erase(int x){
-    // TODO: Remove first occurrence of x in O(n). Return true if removed.
-    (void)x;
+    // TODO: remove first occurrence of x if present
+    Node* cur = head;
+    while(cur){
+        if(cur->val == x){
+            unlink(cur);
+            delete cur;
+            return true;
+        }
+        if(cur->val > x) break; // early exit since sorted
+        cur = cur->next;
+    }
     return false;
 }
 
-// Subproblem 3: merge
+// ---- Subproblem 3: merge(const SortedDeque& other) ----
 void SortedDeque::merge(const SortedDeque& other){
-    // TODO: Merge *copy* of nodes from 'other' into *this* in O(n+m).
-    // 'other' must remain unchanged afterwards.
-    (void)other;
-    // no-op
+    // TODO: O(n+m) merge (copy nodes from 'other' so other remains unchanged)
+    Node* a = head;
+    Node* b = other.head; // read-only walk; copy values
+
+    SortedDeque result;
+    while(a && b){
+        if(a->val <= b->val){
+            result.push_back_node(new Node(a->val));
+            a = a->next;
+        } else {
+            result.push_back_node(new Node(b->val));
+            b = b->next;
+        }
+    }
+    while(a){
+        result.push_back_node(new Node(a->val));
+        a = a->next;
+    }
+    while(b){
+        result.push_back_node(new Node(b->val));
+        b = b->next;
+    }
+    // swap result into *this
+    clear();
+    copy_from(result);
 }
 
-// Subproblem 4: kth_smallest (1-based)
+// ---- Subproblem 4: kth_smallest(size_t k) const ----
 int SortedDeque::kth_smallest(std::size_t k) const{
-    // TODO: Throw std::out_of_range if k==0 or k>size().
-    // Otherwise, return the k-th smallest (k-th node from head).
-    (void)k;
-    throw std::logic_error("kth_smallest: TODO");
+    if(k == 0 || k > sz) throw std::out_of_range("k out of range");
+    Node* cur = head;
+    while(--k){
+        cur = cur->next;
+    }
+    return cur->val;
 }
 
-// Subproblem 5: to_vector
+// ---- Subproblem 5: to_vector() const ----
 std::vector<int> SortedDeque::to_vector() const{
-    // TODO: return elements in order [front..back].
-    return {};
+    std::vector<int> out;
+    out.reserve(sz);
+    for(Node* cur=head; cur; cur=cur->next){
+        out.push_back(cur->val);
+    }
+    return out;
 }
